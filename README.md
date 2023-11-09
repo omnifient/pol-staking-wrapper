@@ -1,66 +1,42 @@
-## Foundry
+# POL Staking Wrapper
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+[PRD](https://docs.google.com/document/d/1PwTVnWjTxxA98-26tN37Pp5meFiLLuuIZ99SvzExDF4/edit?pli=1#heading=h.v8evnmugpcqi)
 
-Foundry consists of:
+## Context
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- an upgrade to the MATIC token, called POL, was recently started
+- roadmap for POL usage includes migrate Polygon PoS validators to stake using POL natively
+- some entities (e.g. centralized exchanges) would love to be able to offer their customers the option of delegating via POL
 
-## Documentation
+## Goal
 
-https://book.getfoundry.sh/
+- build a wrapper contract which validators could deploy, which allows a third party to delegate to them in POL and would handle conversions to and from MATIC transparently
 
-## Usage
+## Interface
 
-### Build
+POLStakeHelper
 
-```shell
-$ forge build
-```
+- must be upgradeable
+- transparent proxy
 
-### Test
+### fields
 
-```shell
-$ forge test
-```
+- delegate
+- beneficiary: funds always go to this address
 
-### Format
+### main functions
 
-```shell
-$ forge fmt
-```
+- stakePOL
+- claimRewards
+- unstakePOL
 
-### Gas Snapshots
+### config functions
 
-```shell
-$ forge snapshot
-```
+- upgrade proxy
+- add/remove operators
+- set beneficiary
 
-### Anvil
+### roles
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+- admin: single account, can upgrade things, add/remove operators, change beneficiary, call stake, unstake, claim
+- operator: multiple accounts, can call stake, unstake, claim
