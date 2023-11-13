@@ -53,42 +53,58 @@ contract POLStakeHelper {
 
     /// @notice TBW
     function stakePOL(uint256 amount) external {
-        // TODO: TBI
         // TODO: onlyAdminOrOperator
-
         require(amount > 0, "INVALID_AMT");
 
+        // transfer POL from sender to this contract
         pol.safeTransferFrom(msg.sender, address(this), amount);
 
-        // TODO: does this need any approval? use permit version
-        polMigrator.unmigrate(amount);
-        // TODO: does this need any approval?
-        // stakingManager.stakeFor(amount, ..) where is delegate used?
+        // convert POL to MATIC
+        polMigrator.unmigrate(amount); // TODO: use unmigrateWithPermit for spending approval
+
+        // approve spending for the staking manager - TODO: do this once with max amount?
+        matic.approve(address(stakingManager), amount);
+
+        // TODO: stake the MATIC
+        // stakingManager.stake(amount, ..) // how to use the delegate?
     }
 
     /// @notice TBW
     function unstakePOL(uint256 amount) external {
-        // TODO: TBI
         // TODO: onlyAdminOrOperator
-
         require(amount > 0, "INVALID_AMT");
 
+        // TODO: unstake the MATIC
         // stakingManager.unstake(amount, ..) where is delegate used?
 
-        // TODO: does this need any approval? use permit version
+        // allow the migrator to spend the MATIC - TODO: do this once with max amount?
+        matic.approve(address(polMigrator), amount);
+
+        // call migrator to convert the MATIC to POL
         polMigrator.migrate(amount);
+
+        // transfer the POL to the beneficiary
         pol.safeTransfer(beneficiary, amount);
     }
 
     /// @notice TBW
     function claimRewards() external {
-        // TODO: TBI
         // TODO: onlyAdminOrOperator
 
-        uint256 amtRewards = 0;
-        // stakingManager.withdrawRewards(...)
-        // TODO: does this need any approval? use permit version
+        // get the validator id (TODO: maybe store this in the contract after staking?)
+        uint256 validatorId = stakingManager.getValidatorId(address(this));
+        // withdraw the rewards from staking
+        stakingManager.withdrawRewards(validatorId);
+        uint256 amtRewards = matic.balanceOf(address(this));
+        require(amtRewards > 0, "NO_REWARDS");
+
+        // allow the migrator to spend the MATIC - TODO: do this once with max amount?
+        matic.approve(address(polMigrator), amtRewards);
+
+        // call migrator to convert the MATIC to POL
         polMigrator.migrate(amtRewards);
+
+        // transfer the POL to the beneficiary
         pol.safeTransfer(beneficiary, amtRewards);
     }
 
