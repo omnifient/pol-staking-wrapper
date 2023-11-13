@@ -40,3 +40,8 @@ POLStakeHelper
 
 - admin: single account, can upgrade things, add/remove operators, change beneficiary, call stake, unstake, claim
 - operator: multiple accounts, can call stake, unstake, claim
+
+
+## Resources
+
+https://wiki.polygon.technology/docs/pos/reference/contracts/genesis-contracts/

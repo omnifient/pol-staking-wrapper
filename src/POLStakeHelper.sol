@@ -9,31 +9,34 @@ import "./interfaces/IPolygonMigration.sol";
 import "./interfaces/IStakeManager.sol";
 
 /// @title POLStakeHelper
-/// @notice TBW
+/// @notice Wrapper contract for validators, to allow a third party to delegate to them in POL.
+/// This contract handles conversions to and from MATIC transparently.
 contract POLStakeHelper is AccessControl {
     using SafeERC20 for IERC20;
 
+    /// @notice Access control roles.
     bytes32 public constant ROLE_ADMIN = keccak256("ADMIN");
     bytes32 public constant ROLE_OPERATOR = keccak256("OPERATOR");
 
-    /// @notice POL token
+    /// @notice POL token.
     IERC20 immutable pol;
 
-    /// @notice MATIC token
+    /// @notice MATIC token.
     IERC20 immutable matic;
 
-    /// @notice contract for POL<->MATIC conversions
+    /// @notice Contract for POL<->MATIC conversions.
     IPolygonMigration immutable polMigrator;
 
-    /// @notice contract for MATIC staking
+    /// @notice Contract for MATIC staking.
     IStakeManager immutable stakingManager;
 
-    /// @notice delegate for staking
+    /// @notice Delegate for staking.
     address public delegate;
 
-    /// @notice beneficiary for rewards and unstake
+    /// @notice Beneficiary for rewards and unstaked tokens.
     address public beneficiary;
 
+    /// @notice Custom modifier for admin or operator gated functions.
     modifier onlyAdminOrOperator() {
         require(
             hasRole(ROLE_ADMIN, msg.sender) ||
@@ -65,7 +68,9 @@ contract POLStakeHelper is AccessControl {
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
     }
 
-    /// @notice TBW
+    /// @notice This function transfer `amount` of POL into the contract,
+    /// uses the `PolygonMigrator` contract to convert it to MATIC, and
+    /// then stakes the MATIC, delegating it to `delegate`.
     function stakePOL(uint256 amount) external onlyAdminOrOperator {
         require(amount > 0, "INVALID_AMT");
 
@@ -82,7 +87,8 @@ contract POLStakeHelper is AccessControl {
         // stakingManager.stake(amount, ..) // TODO: how to use the delegate?
     }
 
-    /// @notice TBW
+    /// @notice This function unstakes the MATIC, using the PolygonMigrator
+    /// to convert it to POL, and then sends it to the `beneficiary`.
     function unstakePOL(uint256 amount) external onlyAdminOrOperator {
         require(amount > 0, "INVALID_AMT");
 
@@ -101,7 +107,8 @@ contract POLStakeHelper is AccessControl {
         pol.safeTransfer(beneficiary, amount);
     }
 
-    /// @notice TBW
+    /// @notice This function calls withdrawRewards on the staking contract,
+    /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
         // get the validator id (TODO: maybe store this in the contract after staking?)
         uint256 validatorId = stakingManager.getValidatorId(address(this));
@@ -120,7 +127,7 @@ contract POLStakeHelper is AccessControl {
         pol.safeTransfer(beneficiary, amtRewards);
     }
 
-    /// @notice TBW
+    /// @notice Sets a new beneficiary address.
     function setBeneficiary(
         address newBeneficiary
     ) external onlyRole(ROLE_ADMIN) {
