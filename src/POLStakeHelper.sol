@@ -29,7 +29,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
     IPolygonMigration public polMigrator;
 
     /// @notice Contract for MATIC staking.
-    IStakeManager public stakingManager;
+    IStakeManager public stakeManager;
 
     /// @notice Delegate for staking.
     address public delegate;
@@ -57,7 +57,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address pol_,
         address matic_,
         address polMigrator_,
-        address stakingManager_,
+        address stakeManager_,
         address delegate_,
         address beneficiary_
     ) external initializer {
@@ -66,13 +66,13 @@ contract POLStakeHelper is AccessControlUpgradeable {
         pol = IERC20(pol_);
         matic = IERC20(matic_);
         polMigrator = IPolygonMigration(polMigrator_);
-        stakingManager = IStakeManager(stakingManager_);
+        stakeManager = IStakeManager(stakeManager_);
 
         delegate = delegate_;
         beneficiary = beneficiary_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
-        matic.approve(address(stakingManager), type(uint256).max);
+        matic.approve(address(stakeManager), type(uint256).max);
         matic.approve(address(polMigrator), type(uint256).max);
 
         // configure access control
@@ -94,7 +94,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
 
         // unlimited spending for the stake manager already approved in the initializer
         // TODO: stake the MATIC
-        // stakingManager.stake(amount, ..) // TODO: how to use the delegate?
+        // stakeManager.stake(amount, ..) // TODO: how to use the delegate?
     }
 
     /// @notice This function unstakes the MATIC, using the PolygonMigrator
@@ -103,9 +103,9 @@ contract POLStakeHelper is AccessControlUpgradeable {
         require(amount > 0, "INVALID_AMT");
 
         // get the validator id (TODO: maybe store this in the contract after staking?)
-        uint256 validatorId = stakingManager.getValidatorId(address(this));
+        uint256 validatorId = stakeManager.getValidatorId(address(this));
         // unstake the MATIC
-        stakingManager.unstake(validatorId); // TODO: where is delegate used?
+        stakeManager.unstake(validatorId); // TODO: where is delegate used?
 
         // unlimited spending for the polygon migrator already approved in the initializer
         // call migrator to convert the MATIC to POL
@@ -119,9 +119,9 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
         // get the validator id (TODO: maybe store this in the contract after staking?)
-        uint256 validatorId = stakingManager.getValidatorId(address(this));
+        uint256 validatorId = stakeManager.getValidatorId(address(this));
         // withdraw the rewards from staking
-        stakingManager.withdrawRewards(validatorId);
+        stakeManager.withdrawRewards(validatorId);
         uint256 amtRewards = matic.balanceOf(address(this));
         require(amtRewards > 0, "NO_REWARDS");
 
