@@ -5,9 +5,8 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 
 contract POLStakeHelperProxy is TransparentUpgradeableProxy {
     constructor(
+        address proxyAdmin,
         address impl_,
         bytes memory data_
-    ) payable TransparentUpgradeableProxy(impl_, msg.sender, data_) {
-        // TODO: TBD (initialOWner)
-    }
+    ) payable TransparentUpgradeableProxy(impl_, proxyAdmin, data_) {}
 }

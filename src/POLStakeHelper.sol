@@ -3,15 +3,16 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IPolygonMigration.sol";
 import "./interfaces/IStakeManager.sol";
 
 /// @title POLStakeHelper
-/// @notice Wrapper contract for validators, to allow a third party to delegate to them in POL.
-/// This contract handles conversions to and from MATIC transparently.
-contract POLStakeHelper is AccessControl {
+/// @notice Upgradeable contract for validators to allow a third party
+// to delegate to them in POL, transparently converting to and from MATIC.
+contract POLStakeHelper is AccessControlUpgradeable {
     using SafeERC20 for IERC20;
 
     /// @notice Access control roles.
@@ -19,16 +20,16 @@ contract POLStakeHelper is AccessControl {
     bytes32 public constant ROLE_OPERATOR = keccak256("OPERATOR");
 
     /// @notice POL token.
-    IERC20 immutable pol;
+    IERC20 public pol;
 
     /// @notice MATIC token.
-    IERC20 immutable matic;
+    IERC20 public matic;
 
     /// @notice Contract for POL<->MATIC conversions.
-    IPolygonMigration immutable polMigrator;
+    IPolygonMigration public polMigrator;
 
     /// @notice Contract for MATIC staking.
-    IStakeManager immutable stakingManager;
+    IStakeManager public stakingManager;
 
     /// @notice Delegate for staking.
     address public delegate;
@@ -46,7 +47,12 @@ contract POLStakeHelper is AccessControl {
         _;
     }
 
-    constructor(
+    constructor(address admin) {
+        // TODO: TBD
+    }
+
+    /// @notice Setup the state for the proxy's implementation.
+    function initialize(
         address admin,
         address pol_,
         address matic_,
@@ -54,7 +60,9 @@ contract POLStakeHelper is AccessControl {
         address stakingManager_,
         address delegate_,
         address beneficiary_
-    ) {
+    ) external initializer {
+        // TODO: add access control to initialization function
+
         pol = IERC20(pol_);
         matic = IERC20(matic_);
         polMigrator = IPolygonMigration(polMigrator_);
