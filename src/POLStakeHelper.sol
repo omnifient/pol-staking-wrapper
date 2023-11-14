@@ -71,6 +71,10 @@ contract POLStakeHelper is AccessControlUpgradeable {
         delegate = delegate_;
         beneficiary = beneficiary_;
 
+        // configure unlimited approval of MATIC for staking and migrator contracts
+        matic.approve(address(stakingManager), type(uint256).max);
+        matic.approve(address(polMigrator), type(uint256).max);
+
         // configure access control
         _setRoleAdmin(ROLE_OPERATOR, ROLE_ADMIN); // set ROLE_ADMIN as the admin role for ROLE_OPERATOR
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
@@ -88,9 +92,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         // convert POL to MATIC
         polMigrator.unmigrate(amount); // TODO: use unmigrateWithPermit for spending approval
 
-        // approve spending for the staking manager - TODO: do this once with max amount?
-        matic.approve(address(stakingManager), amount);
-
+        // unlimited spending for the stake manager already approved in the initializer
         // TODO: stake the MATIC
         // stakingManager.stake(amount, ..) // TODO: how to use the delegate?
     }
@@ -105,9 +107,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         // unstake the MATIC
         stakingManager.unstake(validatorId); // TODO: where is delegate used?
 
-        // allow the migrator to spend the MATIC - TODO: do this once with max amount?
-        matic.approve(address(polMigrator), amount);
-
+        // unlimited spending for the polygon migrator already approved in the initializer
         // call migrator to convert the MATIC to POL
         polMigrator.migrate(amount);
 
@@ -125,9 +125,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         uint256 amtRewards = matic.balanceOf(address(this));
         require(amtRewards > 0, "NO_REWARDS");
 
-        // allow the migrator to spend the MATIC - TODO: do this once with max amount?
-        matic.approve(address(polMigrator), amtRewards);
-
+        // unlimited spending for the polygon migrator already approved in the initializer
         // call migrator to convert the MATIC to POL
         polMigrator.migrate(amtRewards);
 
