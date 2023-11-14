@@ -93,19 +93,21 @@ contract POLStakeHelper is AccessControlUpgradeable {
         polMigrator.unmigrate(amount); // TODO: use unmigrateWithPermit for spending approval
 
         // unlimited spending for the stake manager already approved in the initializer
-        // TODO: stake the MATIC
-        // stakeManager.stake(amount, ..) // TODO: how to use the delegate?
+        // TODO: stake the MATIC - how to use the delegate?
+        // stakeManager.stakeFor(amount, ..)
+        // TODO: how to handle the fact that multiple calls to stakeFor mint multiple NFTs?
     }
 
     /// @notice This function unstakes the MATIC, using the PolygonMigrator
     /// to convert it to POL, and then sends it to the `beneficiary`.
     function unstakePOL(uint256 amount) external onlyAdminOrOperator {
+        // TODO: stakeManager.unstake() does not take an amount as parameter
         require(amount > 0, "INVALID_AMT");
 
-        // get the validator id (TODO: maybe store this in the contract after staking?)
+        // get the validator id (TODO: review this - incorrect)
         uint256 validatorId = stakeManager.getValidatorId(address(this));
-        // unstake the MATIC
-        stakeManager.unstake(validatorId); // TODO: where is delegate used?
+        // unstake the MATIC - TODO: where is delegate used?
+        stakeManager.unstake(validatorId);
 
         // unlimited spending for the polygon migrator already approved in the initializer
         // call migrator to convert the MATIC to POL
@@ -118,7 +120,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// @notice This function calls withdrawRewards on the staking contract,
     /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
-        // get the validator id (TODO: maybe store this in the contract after staking?)
+        // get the validator id (TODO: review this - incorrect)
         uint256 validatorId = stakeManager.getValidatorId(address(this));
         // withdraw the rewards from staking
         stakeManager.withdrawRewards(validatorId);

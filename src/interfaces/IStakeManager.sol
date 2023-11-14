@@ -3,12 +3,13 @@ pragma solidity ^0.8.23;
 abstract contract IStakeManager {
     function getValidatorId(address user) public view virtual returns (uint256);
 
-    function stake(
-        uint256 amount,
-        uint256 heimdallFee,
-        bool acceptDelegation,
-        bytes calldata signerPubkey
-    ) external virtual;
+    // TODO: not available in the deployed contract
+    // function stake(
+    //     uint256 amount,
+    //     uint256 heimdallFee,
+    //     bool acceptDelegation,
+    //     bytes calldata signerPubkey
+    // ) external virtual;
 
     function stakeFor(
         address user,
