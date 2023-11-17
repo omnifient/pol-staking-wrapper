@@ -20,26 +20,24 @@ contract DeployInitPOLStakeHelper is Script {
         bytes memory delegateKey = vm.envBytes("DELEGATE_KEY");
 
         // deploy the implementation
-        POLStakeHelper impl = new POLStakeHelper(admin);
+        POLStakeHelper impl = new POLStakeHelper();
 
-        // deploy the transparent proxy
-        // NOTE: behind the scenes, this deploys a ProxyAdmin
-        // the only one who allowed to upgrade the proxy
+        // deploy and initialize the transparent proxy
+        // NOTE: this implicitly deploys a ProxyAdmin (who is allowed to upgrade)
         POLStakeHelperProxy proxy = new POLStakeHelperProxy(
             admin,
             address(impl),
-            ""
-        );
-
-        POLStakeHelper(address(proxy)).initialize(
-            admin,
-            pol,
-            matic,
-            polygonMigrator,
-            stakingManager,
-            delegate,
-            delegateKey,
-            beneficiary
+            abi.encodeWithSignature(
+                "initialize(address,address,address,address,address,address,bytes,address)",
+                admin,
+                pol,
+                matic,
+                polygonMigrator,
+                stakingManager,
+                delegate,
+                delegateKey,
+                beneficiary
+            )
         );
     }
 }

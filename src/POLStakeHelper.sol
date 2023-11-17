@@ -51,8 +51,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
         _;
     }
 
-    constructor(address admin) {
-        // TODO: TBD
+    constructor() {
+        _disableInitializers();
     }
 
     /// @notice Setup the state for the proxy's implementation.
@@ -67,6 +67,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address beneficiary_
     ) external initializer {
         // TODO: add access control to initialization function
+
+        __AccessControl_init(); // does nothing, but keeping it here as best practice
 
         pol = IERC20(pol_);
         matic = IERC20(matic_);
