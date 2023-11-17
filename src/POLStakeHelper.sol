@@ -32,10 +32,14 @@ contract POLStakeHelper is AccessControlUpgradeable {
     IStakeManager public stakeManager;
 
     /// @notice Delegate for staking.
-    address public delegate;
+    address public delegate; // TODO: not needed?
+    bytes public delegateKey;
 
     /// @notice Beneficiary for rewards and unstaked tokens.
     address public beneficiary;
+
+    /// @notice Validator identifier used for subsequent calls to StakeManager.
+    uint256 public validatorId;
 
     /// @notice Custom modifier for admin or operator gated functions.
     modifier onlyAdminOrOperator() {
@@ -59,6 +63,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address polMigrator_,
         address stakeManager_,
         address delegate_,
+        bytes memory delegateKey_,
         address beneficiary_
     ) external initializer {
         // TODO: add access control to initialization function
@@ -70,6 +75,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
 
         delegate = delegate_;
         beneficiary = beneficiary_;
+        delegateKey = delegateKey_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
         matic.approve(address(stakeManager), type(uint256).max);
@@ -84,7 +90,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// uses the `PolygonMigrator` contract to convert it to MATIC, and
     /// then stakes the MATIC, delegating it to `delegate`.
     function stakePOL(uint256 amount) external onlyAdminOrOperator {
-        require(amount > 0, "INVALID_AMT");
+        uint256 fee = stakeManager.minHeimdallFee();
+        require(amount > fee, "INVALID_AMT");
 
         // transfer POL from sender to this contract
         pol.safeTransferFrom(msg.sender, address(this), amount);
@@ -92,36 +99,52 @@ contract POLStakeHelper is AccessControlUpgradeable {
         // convert POL to MATIC
         polMigrator.unmigrate(amount); // TODO: use unmigrateWithPermit for spending approval
 
-        // unlimited spending for the stake manager already approved in the initializer
-        // TODO: stake the MATIC - how to use the delegate?
-        // stakeManager.stakeFor(amount, ..)
-        // TODO: how to handle the fact that multiple calls to stakeFor mint multiple NFTs?
+        // NOTE: already approved unlimited spending for the stake manager in the initializer
+
+        if (validatorId == 0) {
+            // first time staking (or after unstake)
+            stakeManager.stakeFor(
+                address(this),
+                amount - fee,
+                fee,
+                false,
+                delegateKey
+            );
+            // store the validatorId for future calls
+            validatorId = stakeManager.getValidatorId(address(this));
+        } else {
+            // stakeFor was already called before and the validatorId is still valid
+            stakeManager.restake(validatorId, amount, true); // TODO: stakeRewards
+        }
     }
 
     /// @notice This function unstakes the MATIC, using the PolygonMigrator
     /// to convert it to POL, and then sends it to the `beneficiary`.
-    function unstakePOL(uint256 amount) external onlyAdminOrOperator {
-        // TODO: stakeManager.unstake() does not take an amount as parameter
-        require(amount > 0, "INVALID_AMT");
+    function unstakePOL() external onlyAdminOrOperator {
+        require(validatorId != 0, "NO_STAKE_YET");
 
-        // get the validator id (TODO: review this - incorrect)
-        uint256 validatorId = stakeManager.getValidatorId(address(this));
-        // unstake the MATIC - TODO: where is delegate used?
+        // unstake the MATIC
         stakeManager.unstake(validatorId);
 
-        // unlimited spending for the polygon migrator already approved in the initializer
-        // call migrator to convert the MATIC to POL
-        polMigrator.migrate(amount);
+        // reset validator id
+        validatorId = 0;
 
-        // transfer the POL to the beneficiary
-        pol.safeTransfer(beneficiary, amount);
+        uint256 amount = matic.balanceOf(address(this));
+        if (amount > 0) {
+            // unlimited spending for the polygon migrator already approved in the initializer
+            // call migrator to convert the MATIC to POL
+            polMigrator.migrate(amount);
+
+            // transfer the POL to the beneficiary
+            pol.safeTransfer(beneficiary, amount);
+        }
     }
 
     /// @notice This function calls withdrawRewards on the staking contract,
     /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
-        // get the validator id (TODO: review this - incorrect)
-        uint256 validatorId = stakeManager.getValidatorId(address(this));
+        require(validatorId != 0, "NO_STAKE_YET");
+
         // withdraw the rewards from staking
         stakeManager.withdrawRewards(validatorId);
         uint256 amtRewards = matic.balanceOf(address(this));

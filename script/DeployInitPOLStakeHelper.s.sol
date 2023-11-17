@@ -17,6 +17,7 @@ contract DeployInitPOLStakeHelper is Script {
         address stakingManager = vm.envAddress("STAKING_MANAGER");
         address delegate = vm.envAddress("DELEGATE");
         address beneficiary = vm.envAddress("BENEFICIARY");
+        bytes memory delegateKey = vm.envBytes("DELEGATE_KEY");
 
         // deploy the implementation
         POLStakeHelper impl = new POLStakeHelper(admin);
@@ -37,6 +38,7 @@ contract DeployInitPOLStakeHelper is Script {
             polygonMigrator,
             stakingManager,
             delegate,
+            delegateKey,
             beneficiary
         );
     }
