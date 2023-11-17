@@ -44,8 +44,14 @@ POLStakeHelper
 
 ## Resources
 
+### docs
+https://wiki.polygon.technology/docs/delegate/staking-faq/#how-to-stake-tokens-on-polygon
+https://wiki.polygon.technology/docs/pos/reference/contracts/stakingmanager/
+
+### code
 https://github.com/0xPolygon/pol-token/blob/main/src/PolygonMigration.sol
 https://github.com/maticnetwork/contracts/blob/main/contracts/staking/stakeManager/StakeManager.sol
 
+### addresses
 https://wiki.polygon.technology/docs/pos/reference/contracts/genesis-contracts/
 https://github.com/0xPolygon/pol-token/blob/main/deployments/1.md
