@@ -80,8 +80,10 @@ contract POLStakeHelper is AccessControlUpgradeable {
         delegateKey = delegateKey_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
-        matic.approve(address(stakeManager), type(uint256).max);
-        matic.approve(address(polMigrator), type(uint256).max);
+        matic.approve(address(stakeManager), type(uint256).max); // for stakeFor/restake
+        matic.approve(address(polMigrator), type(uint256).max); // for migrate
+        // configure unlimited approval of POL for migrator contract
+        pol.approve(address(polMigrator), type(uint256).max); // for unmigrate
 
         // configure access control
         _setRoleAdmin(ROLE_OPERATOR, ROLE_ADMIN); // set ROLE_ADMIN as the admin role for ROLE_OPERATOR
@@ -99,10 +101,10 @@ contract POLStakeHelper is AccessControlUpgradeable {
         pol.safeTransferFrom(msg.sender, address(this), amount);
 
         // convert POL to MATIC
-        polMigrator.unmigrate(amount); // TODO: use unmigrateWithPermit for spending approval
+        // NOTE: already approved unlimited spending for the migrator (in the initializer)
+        polMigrator.unmigrate(amount);
 
-        // NOTE: already approved unlimited spending for the stake manager in the initializer
-
+        // NOTE: already approved unlimited spending for the stake manager (in the initializer)
         if (validatorId == 0) {
             // first time staking (or after unstake)
             stakeManager.stakeFor(
@@ -133,8 +135,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
 
         uint256 amount = matic.balanceOf(address(this));
         if (amount > 0) {
-            // unlimited spending for the polygon migrator already approved in the initializer
-            // call migrator to convert the MATIC to POL
+            // convert MATIC to POL
+            // NOTE: already approved unlimited spending for the migrator (in the initializer)
             polMigrator.migrate(amount);
 
             // transfer the POL to the beneficiary
@@ -152,8 +154,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
         uint256 amtRewards = matic.balanceOf(address(this));
         require(amtRewards > 0, "NO_REWARDS");
 
-        // unlimited spending for the polygon migrator already approved in the initializer
-        // call migrator to convert the MATIC to POL
+        // convert MATIC to POL
+        // NOTE: already approved unlimited spending for the migrator (in the initializer)
         polMigrator.migrate(amtRewards);
 
         // transfer the POL to the beneficiary
