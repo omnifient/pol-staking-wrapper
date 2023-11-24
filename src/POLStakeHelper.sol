@@ -55,7 +55,8 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address matic_,
         address polMigrator_,
         address delegate_,
-        address beneficiary_
+        address beneficiary_,
+        address stakeManager_
     ) external initializer {
         // TODO: add access control to initialization function
 
@@ -68,7 +69,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         beneficiary = beneficiary_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
-        matic.approve(delegate_, type(uint256).max); // for stake/restake
+        matic.approve(stakeManager_, type(uint256).max); // for stake/restake
         matic.approve(polMigrator_, type(uint256).max); // for migrate
         // configure unlimited approval of POL for migrator contract
         pol.approve(polMigrator_, type(uint256).max); // for unmigrate
@@ -78,9 +79,9 @@ contract POLStakeHelper is AccessControlUpgradeable {
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
     }
 
-    /// @notice This function transfer `amount` of POL into the contract,
-    /// uses the `PolygonMigrator` contract to convert it to MATIC, and
-    /// then stakes the MATIC, delegating it to `delegate`.
+    /// @notice This function transfers `amount` of POL into the contract,
+    /// uses `PolygonMigrator` to convert it to MATIC, and then stakes the
+    // MATIC by delegating it to `delegate`.
     function stakePOL(uint256 amount) external onlyAdminOrOperator {
         require(amount > 0, "INVALID_AMT");
 
@@ -92,10 +93,13 @@ contract POLStakeHelper is AccessControlUpgradeable {
         polMigrator.unmigrate(amount);
 
         // NOTE: already approved unlimited spending for the stake manager (in the initializer)
-        delegate.buyVoucher(amount, 0); // TODO: TBD _minSharesToMint
+        // (stake manager - not the delegate - is the contract that actually transfers the funds)
+        // NOTE: `buyVoucher` distributes rewards before staking
+        // they will remain in POLStakeHelper until `claimRewards` is called
+        delegate.buyVoucher(amount, amount);
     }
 
-    /// @notice This function unstakes the MATIC, using the PolygonMigrator
+    /// @notice This function unstakes `amount` of MATIC, using the PolygonMigrator
     /// to convert it to POL, and then sends it to the `beneficiary`.
     function unstakePOL(uint256 amount) external onlyAdminOrOperator {
         // TODO: require(validatorId != 0, "NO_STAKE_YET");

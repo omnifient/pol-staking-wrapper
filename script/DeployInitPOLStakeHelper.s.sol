@@ -14,6 +14,7 @@ contract DeployInitPOLStakeHelper is Script {
         address polygonMigrator = vm.envAddress("POLYGON_MANAGER");
         address delegate = vm.envAddress("DELEGATE");
         address beneficiary = vm.envAddress("BENEFICIARY");
+        address stakeManager = vm.envAddress("STAKE_MANAGER");
 
         DeployLib.deploy(
             admin,
@@ -21,7 +22,8 @@ contract DeployInitPOLStakeHelper is Script {
             matic,
             polygonMigrator,
             delegate,
-            beneficiary
+            beneficiary,
+            stakeManager
         );
     }
 }
