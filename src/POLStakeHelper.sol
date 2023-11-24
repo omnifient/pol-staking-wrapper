@@ -133,16 +133,17 @@ contract POLStakeHelper is AccessControlUpgradeable {
         // TODO: require(validatorId != 0, "NO_STAKE_YET");
 
         // withdraw the rewards from staking
-        // TODO: TBD how to get rewards from delegate
+        delegate.withdrawRewards();
+
         uint256 amtRewards = matic.balanceOf(address(this));
-        require(amtRewards > 0, "NO_REWARDS");
+        if (amtRewards > 0) {
+            // convert MATIC to POL
+            // NOTE: already approved unlimited spending for the migrator (in the initializer)
+            polMigrator.migrate(amtRewards);
 
-        // convert MATIC to POL
-        // NOTE: already approved unlimited spending for the migrator (in the initializer)
-        polMigrator.migrate(amtRewards);
-
-        // transfer the POL to the beneficiary
-        pol.safeTransfer(beneficiary, amtRewards);
+            // transfer the POL to the beneficiary
+            pol.safeTransfer(beneficiary, amtRewards);
+        }
     }
 
     /// @notice Sets a new beneficiary address.

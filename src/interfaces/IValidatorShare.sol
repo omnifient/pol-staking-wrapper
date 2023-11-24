@@ -14,6 +14,8 @@ interface IValidatorShare {
 
     function unstakeClaimTokens() external;
 
+    function withdrawRewards() external;
+
     function sellVoucher_new(
         uint256 claimAmount,
         uint256 maximumSharesToBurn
