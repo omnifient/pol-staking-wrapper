@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import "lib/forge-std/src/console.sol";
 import "lib/forge-std/src/Script.sol";
 
-import "../src/POLStakeHelper.sol";
-import "../src/POLStakeHelperProxy.sol";
+import "./DeployLib.sol";
 
 contract DeployInitPOLStakeHelper is Script {
     function run() external {
@@ -19,25 +17,15 @@ contract DeployInitPOLStakeHelper is Script {
         address beneficiary = vm.envAddress("BENEFICIARY");
         bytes memory delegateKey = vm.envBytes("DELEGATE_KEY");
 
-        // deploy the implementation
-        POLStakeHelper impl = new POLStakeHelper();
-
-        // deploy and initialize the transparent proxy
-        // NOTE: this implicitly deploys a ProxyAdmin (who is allowed to upgrade)
-        POLStakeHelperProxy proxy = new POLStakeHelperProxy(
+        DeployLib.deploy(
             admin,
-            address(impl),
-            abi.encodeWithSignature(
-                "initialize(address,address,address,address,address,address,bytes,address)",
-                admin,
-                pol,
-                matic,
-                polygonMigrator,
-                stakingManager,
-                delegate,
-                delegateKey,
-                beneficiary
-            )
+            pol,
+            matic,
+            polygonMigrator,
+            stakingManager,
+            delegate,
+            beneficiary,
+            delegateKey
         );
     }
 }
