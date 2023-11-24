@@ -13,7 +13,8 @@ library DeployLib {
         address matic,
         address polygonMigrator,
         address delegate,
-        address beneficiary
+        address beneficiary,
+        address stakeManager
     ) internal returns (address) {
         // deploy the implementation
         console.log("--- deploying implementation");
@@ -27,13 +28,14 @@ library DeployLib {
             admin,
             address(impl),
             abi.encodeWithSignature(
-                "initialize(address,address,address,address,address,address)",
+                "initialize(address,address,address,address,address,address,address)",
                 admin,
                 pol,
                 matic,
                 polygonMigrator,
                 delegate,
-                beneficiary
+                beneficiary,
+                stakeManager
             )
         );
         console.log("--- proxy deployed");
