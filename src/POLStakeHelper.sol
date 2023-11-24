@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IPolygonMigration.sol";
-import "./interfaces/IStakeManager.sol";
+import "./interfaces/IValidatorShare.sol";
 
 /// @title POLStakeHelper
 /// @notice Upgradeable contract for validators to allow a third party
@@ -28,18 +28,11 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// @notice Contract for POL<->MATIC conversions.
     IPolygonMigration public polMigrator;
 
-    /// @notice Contract for MATIC staking.
-    IStakeManager public stakeManager;
-
-    /// @notice Delegate for staking.
-    address public delegate; // TODO: not needed?
-    bytes public delegateKey;
+    /// @notice Contract for MATIC delegate for staking.
+    IValidatorShare public delegate;
 
     /// @notice Beneficiary for rewards and unstaked tokens.
     address public beneficiary;
-
-    /// @notice Validator identifier used for subsequent calls to StakeManager.
-    uint256 public validatorId;
 
     /// @notice Custom modifier for admin or operator gated functions.
     modifier onlyAdminOrOperator() {
@@ -61,9 +54,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address pol_,
         address matic_,
         address polMigrator_,
-        address stakeManager_,
         address delegate_,
-        bytes memory delegateKey_,
         address beneficiary_
     ) external initializer {
         // TODO: add access control to initialization function
@@ -73,17 +64,14 @@ contract POLStakeHelper is AccessControlUpgradeable {
         pol = IERC20(pol_);
         matic = IERC20(matic_);
         polMigrator = IPolygonMigration(polMigrator_);
-        stakeManager = IStakeManager(stakeManager_);
-
-        delegate = delegate_;
+        delegate = IValidatorShare(delegate_);
         beneficiary = beneficiary_;
-        delegateKey = delegateKey_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
-        matic.approve(address(stakeManager), type(uint256).max); // for stakeFor/restake
-        matic.approve(address(polMigrator), type(uint256).max); // for migrate
+        matic.approve(delegate_, type(uint256).max); // for stake/restake
+        matic.approve(polMigrator_, type(uint256).max); // for migrate
         // configure unlimited approval of POL for migrator contract
-        pol.approve(address(polMigrator), type(uint256).max); // for unmigrate
+        pol.approve(polMigrator_, type(uint256).max); // for unmigrate
 
         // configure access control
         _setRoleAdmin(ROLE_OPERATOR, ROLE_ADMIN); // set ROLE_ADMIN as the admin role for ROLE_OPERATOR
@@ -94,8 +82,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// uses the `PolygonMigrator` contract to convert it to MATIC, and
     /// then stakes the MATIC, delegating it to `delegate`.
     function stakePOL(uint256 amount) external onlyAdminOrOperator {
-        uint256 fee = stakeManager.minHeimdallFee();
-        require(amount > fee, "INVALID_AMT");
+        require(amount > 0, "INVALID_AMT");
 
         // transfer POL from sender to this contract
         pol.safeTransferFrom(msg.sender, address(this), amount);
@@ -105,52 +92,36 @@ contract POLStakeHelper is AccessControlUpgradeable {
         polMigrator.unmigrate(amount);
 
         // NOTE: already approved unlimited spending for the stake manager (in the initializer)
-        if (validatorId == 0) {
-            // first time staking (or after unstake)
-            stakeManager.stakeFor(
-                address(this),
-                amount - fee,
-                fee,
-                false,
-                delegateKey
-            );
-            // store the validatorId for future calls
-            validatorId = stakeManager.getValidatorId(address(this));
-        } else {
-            // stakeFor was already called before and the validatorId is still valid
-            stakeManager.restake(validatorId, amount, true); // TODO: stakeRewards
-        }
+        delegate.buyVoucher(amount, 0); // TODO: TBD _minSharesToMint
     }
 
     /// @notice This function unstakes the MATIC, using the PolygonMigrator
     /// to convert it to POL, and then sends it to the `beneficiary`.
-    function unstakePOL() external onlyAdminOrOperator {
-        require(validatorId != 0, "NO_STAKE_YET");
+    function unstakePOL(uint256 amount) external onlyAdminOrOperator {
+        // TODO: require(validatorId != 0, "NO_STAKE_YET");
+        require(amount > 0, "INVALID_AMT");
 
         // unstake the MATIC
-        stakeManager.unstake(validatorId);
+        delegate.sellVoucher_new(amount, 0); // TODO: TBD maximumSharesToBurn
 
-        // reset validator id
-        validatorId = 0;
-
-        uint256 amount = matic.balanceOf(address(this));
-        if (amount > 0) {
+        uint256 amountUnstaked = matic.balanceOf(address(this));
+        if (amountUnstaked > 0) {
             // convert MATIC to POL
             // NOTE: already approved unlimited spending for the migrator (in the initializer)
-            polMigrator.migrate(amount);
+            polMigrator.migrate(amountUnstaked);
 
             // transfer the POL to the beneficiary
-            pol.safeTransfer(beneficiary, amount);
+            pol.safeTransfer(beneficiary, amountUnstaked);
         }
     }
 
     /// @notice This function calls withdrawRewards on the staking contract,
     /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
-        require(validatorId != 0, "NO_STAKE_YET");
+        // TODO: require(validatorId != 0, "NO_STAKE_YET");
 
         // withdraw the rewards from staking
-        stakeManager.withdrawRewards(validatorId);
+        // TODO: TBD how to get rewards from delegate
         uint256 amtRewards = matic.balanceOf(address(this));
         require(amtRewards > 0, "NO_REWARDS");
 

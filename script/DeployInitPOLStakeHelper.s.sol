@@ -12,20 +12,16 @@ contract DeployInitPOLStakeHelper is Script {
         address pol = vm.envAddress("TOKEN_POL");
         address matic = vm.envAddress("TOKEN_MATIC");
         address polygonMigrator = vm.envAddress("POLYGON_MANAGER");
-        address stakingManager = vm.envAddress("STAKING_MANAGER");
         address delegate = vm.envAddress("DELEGATE");
         address beneficiary = vm.envAddress("BENEFICIARY");
-        bytes memory delegateKey = vm.envBytes("DELEGATE_KEY");
 
         DeployLib.deploy(
             admin,
             pol,
             matic,
             polygonMigrator,
-            stakingManager,
             delegate,
-            beneficiary,
-            delegateKey
+            beneficiary
         );
     }
 }
