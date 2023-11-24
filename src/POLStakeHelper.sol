@@ -99,23 +99,31 @@ contract POLStakeHelper is AccessControlUpgradeable {
         delegate.buyVoucher(amount, amount);
     }
 
-    /// @notice This function unstakes `amount` of MATIC, using the PolygonMigrator
-    /// to convert it to POL, and then sends it to the `beneficiary`.
+    /// @notice This function tells the delegate to unstake `amount` of MATIC.
+    /// The unstaking process is asynchronous; a subsequent call to `transferUnstakedPOL`
+    /// will transfer the unstaked tokens to the beneficiary.
     function unstakePOL(uint256 amount) external onlyAdminOrOperator {
-        // TODO: require(validatorId != 0, "NO_STAKE_YET");
         require(amount > 0, "INVALID_AMT");
+        // TODO: require(amount <= delegate.balanceOf(address(this)) * delegate.exchangeRate(), "INSUFFICIENT_BAL");
 
-        // unstake the MATIC
-        delegate.sellVoucher_new(amount, 0); // TODO: TBD maximumSharesToBurn
+        // initiate the unstaking of MATIC
+        delegate.sellVoucher(amount, amount);
+    }
 
-        uint256 amountUnstaked = matic.balanceOf(address(this));
-        if (amountUnstaked > 0) {
+    /// @notice Transfers the unstaked tokens, first by converting the unstaked
+    /// MATIC to POL using the PolygonMigrator, and then sending it to the `beneficiary`.
+    function transferUnstakedPOL() external onlyAdminOrOperator {
+        // claim the unstaked MATIC
+        delegate.unstakeClaimTokens();
+
+        uint256 amount = matic.balanceOf(address(this));
+        if (amount > 0) {
             // convert MATIC to POL
             // NOTE: already approved unlimited spending for the migrator (in the initializer)
-            polMigrator.migrate(amountUnstaked);
+            polMigrator.migrate(amount);
 
             // transfer the POL to the beneficiary
-            pol.safeTransfer(beneficiary, amountUnstaked);
+            pol.safeTransfer(beneficiary, amount);
         }
     }
 

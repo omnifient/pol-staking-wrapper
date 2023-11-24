@@ -7,14 +7,17 @@ interface IValidatorShare {
         uint256 _minSharesToMint
     ) external returns (uint256 amountToDeposit);
 
+    function sellVoucher(
+        uint256 claimAmount,
+        uint256 maximumSharesToBurn
+    ) external;
+
+    function unstakeClaimTokens() external;
+
     function sellVoucher_new(
         uint256 claimAmount,
         uint256 maximumSharesToBurn
     ) external;
 
     function unstakeClaimTokens_new(uint256 unbondNonce) external;
-
-    function restake()
-        external
-        returns (uint256 amountRestaked, uint256 liquidReward);
 }
