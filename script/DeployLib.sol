@@ -12,10 +12,8 @@ library DeployLib {
         address pol,
         address matic,
         address polygonMigrator,
-        address stakingManager,
         address delegate,
-        address beneficiary,
-        bytes memory delegateKey
+        address beneficiary
     ) internal returns (address) {
         // deploy the implementation
         console.log("--- deploying implementation");
@@ -29,14 +27,12 @@ library DeployLib {
             admin,
             address(impl),
             abi.encodeWithSignature(
-                "initialize(address,address,address,address,address,address,bytes,address)",
+                "initialize(address,address,address,address,address,address)",
                 admin,
                 pol,
                 matic,
                 polygonMigrator,
-                stakingManager,
                 delegate,
-                delegateKey,
                 beneficiary
             )
         );
