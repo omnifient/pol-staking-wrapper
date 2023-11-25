@@ -7,6 +7,8 @@ import "./DeployLib.sol";
 
 contract DeployInitPOLStakeHelper is Script {
     function run() external {
+        vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+
         // retrieve required arguments
         address admin = vm.envAddress("ADDRESS_ADMIN");
         address pol = vm.envAddress("TOKEN_POL");
@@ -25,5 +27,7 @@ contract DeployInitPOLStakeHelper is Script {
             beneficiary,
             stakeManager
         );
+
+        vm.stopBroadcast();
     }
 }
