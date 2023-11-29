@@ -13,7 +13,7 @@ contract DeployInitPOLStakeHelper is Script {
         address admin = vm.envAddress("ADDRESS_ADMIN");
         address pol = vm.envAddress("TOKEN_POL");
         address matic = vm.envAddress("TOKEN_MATIC");
-        address polygonMigrator = vm.envAddress("POLYGON_MANAGER");
+        address polygonMigrator = vm.envAddress("POLYGON_MIGRATOR");
         address delegate = vm.envAddress("DELEGATE");
         address beneficiary = vm.envAddress("BENEFICIARY");
         address stakeManager = vm.envAddress("STAKE_MANAGER");
