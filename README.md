@@ -41,17 +41,35 @@ POLStakeHelper
 - admin: single account, can upgrade things, add/remove operators, change beneficiary, call stake, unstake, claim
 - operator: multiple accounts, can call stake, unstake, claim
 
+## Testing and Deploying
+
+### Testing
+
+```shell
+forge test -vvvvv --fork-url <https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_KEY>
+```
+
+### Deployment to Mainnet Forks
+
+TODO
+
+### Deployment to Testnet/Mainnet
+
+TODO
 
 ## Resources
 
 ### docs
+
 https://wiki.polygon.technology/docs/delegate/staking-faq/#how-to-stake-tokens-on-polygon
 https://wiki.polygon.technology/docs/pos/reference/contracts/stakingmanager/
 
 ### code
+
 https://github.com/0xPolygon/pol-token/blob/main/src/PolygonMigration.sol
 https://github.com/maticnetwork/contracts/blob/main/contracts/staking/stakeManager/StakeManager.sol
 
 ### addresses
+
 https://wiki.polygon.technology/docs/pos/reference/contracts/genesis-contracts/
 https://github.com/0xPolygon/pol-token/blob/main/deployments/1.md
