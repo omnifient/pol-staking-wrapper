@@ -54,7 +54,6 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address pol_,
         address matic_,
         address polMigrator_,
-        address delegate_,
         address beneficiary_,
         address stakeManager_
     ) external initializer {
@@ -65,7 +64,6 @@ contract POLStakeHelper is AccessControlUpgradeable {
         pol = IERC20(pol_);
         matic = IERC20(matic_);
         polMigrator = IPolygonMigration(polMigrator_);
-        delegate = IValidatorShare(delegate_);
         beneficiary = beneficiary_;
 
         // configure unlimited approval of MATIC for staking and migrator contracts
@@ -77,6 +75,10 @@ contract POLStakeHelper is AccessControlUpgradeable {
         // configure access control
         _setRoleAdmin(ROLE_OPERATOR, ROLE_ADMIN); // set ROLE_ADMIN as the admin role for ROLE_OPERATOR
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
+    }
+
+    function setDelegate(address delegate_) external onlyAdminOrOperator {
+        delegate = IValidatorShare(delegate_);
     }
 
     /// @notice This function transfers `amount` of POL into the contract,

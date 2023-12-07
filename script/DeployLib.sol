@@ -12,7 +12,6 @@ library DeployLib {
         address pol,
         address matic,
         address polygonMigrator,
-        address delegate,
         address beneficiary,
         address stakeManager
     ) internal returns (address) {
@@ -28,12 +27,11 @@ library DeployLib {
             admin,
             address(impl),
             abi.encodeWithSignature(
-                "initialize(address,address,address,address,address,address,address)",
+                "initialize(address,address,address,address,address,address)",
                 admin,
                 pol,
                 matic,
                 polygonMigrator,
-                delegate,
                 beneficiary,
                 stakeManager
             )
