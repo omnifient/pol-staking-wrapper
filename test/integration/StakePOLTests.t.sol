@@ -3,7 +3,9 @@ pragma solidity ^0.8.23;
 
 import "lib/forge-std/src/Test.sol";
 
-contract StakePOLTests is Test {
+import "./Base.t.sol";
+
+contract StakePOLTests is Base {
     function testAdminCanStake() public {}
 
     function testOperatorCanStake() public {}
