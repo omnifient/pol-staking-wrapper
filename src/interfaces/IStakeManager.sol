@@ -26,4 +26,10 @@ abstract contract IStakeManager {
     function unstake(uint256 validatorId) external virtual;
 
     function withdrawRewards(uint256 validatorId) public virtual;
+
+    function validatorThreshold() public view virtual returns (uint256);
+
+    function updateValidatorThreshold(uint256 validatorId) public virtual;
+
+    function token() external view virtual returns (address);
 }
