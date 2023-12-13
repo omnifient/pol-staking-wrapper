@@ -21,6 +21,14 @@ contract Base is Test {
 
     POLStakeHelper internal _polStakeHelper;
 
+    address internal _operator = vm.addr(1);
+    address internal _randomJoe = vm.addr(2);
+
+    address internal _stakeManagerAddr = vm.envAddress("STAKE_MANAGER");
+    IStakeManager internal _stakeManager = IStakeManager(_stakeManagerAddr);
+
+    address internal _delegate;
+
     function setUp() public virtual {
         address deployer = vm.addr(1);
 
@@ -29,8 +37,6 @@ contract Base is Test {
 
         _matic = IERC20(vm.envAddress("TOKEN_MATIC"));
         _pol = IERC20(vm.envAddress("TOKEN_POL"));
-        address stakeManagerAddr = vm.envAddress("STAKE_MANAGER");
-        IStakeManager stakeManager = IStakeManager(stakeManagerAddr);
 
         vm.startPrank(deployer);
         // deploy and (partly) initialize the POLStakeHelper
@@ -40,7 +46,7 @@ contract Base is Test {
             address(_matic),
             vm.envAddress("POLYGON_MIGRATOR"),
             _beneficiary,
-            stakeManagerAddr
+            _stakeManagerAddr
         );
         _polStakeHelper = POLStakeHelper(polStakeHelperProxyAddr);
         vm.stopPrank();
@@ -55,30 +61,43 @@ contract Base is Test {
 
         // prank the stake manager address and increase the validator threshold
         address governanceAddress = 0x6e7a5820baD6cebA8Ef5ea69c0C92EbbDAc9CE48;
-        uint256 currentThreshold = stakeManager.validatorThreshold();
+        uint256 currentThreshold = _stakeManager.validatorThreshold();
         vm.prank(governanceAddress);
-        stakeManager.updateValidatorThreshold(currentThreshold + 1);
+        _stakeManager.updateValidatorThreshold(currentThreshold + 1);
 
         vm.startPrank(validatorAddress);
-        _matic.approve(stakeManagerAddr, 3 * 10 ** 18);
-        stakeManager.stakeFor(
+        _matic.approve(_stakeManagerAddr, 3 * 10 ** 18);
+        _stakeManager.stakeFor(
             polStakeHelperProxyAddr,
             10 ** 18, // min amount
             10 ** 18, // min fee
             true, // must accept delegation
             signerPubKey // signer pub key for the validator
         );
-        address delegate = stakeManager.getValidatorContract(
-            stakeManager.getValidatorId(polStakeHelperProxyAddr)
+        _delegate = _stakeManager.getValidatorContract(
+            _stakeManager.getValidatorId(polStakeHelperProxyAddr)
         );
         vm.stopPrank();
 
         vm.prank(_admin);
-        _polStakeHelper.setDelegate(delegate);
+        _polStakeHelper.setDelegate(_delegate);
     }
 
     function _getSigner(bytes memory pub) private pure returns (address) {
         require(pub.length == 64, "not pub");
         return address(uint160(uint256(keccak256(pub))));
+    }
+
+    function grantOperatorRole(address to) internal {
+        bytes32 role = _polStakeHelper.ROLE_OPERATOR();
+        vm.broadcast(_admin);
+        _polStakeHelper.grantRole(role, to);
+    }
+
+    function getDelegateShares(uint256 amount) internal view returns (uint256) {
+        uint256 exchangeRate = IValidatorShare(_delegate).exchangeRate();
+        uint256 precision = 10 ** 29;
+        uint256 sharedMinted = (amount * exchangeRate) / precision;
+        return sharedMinted;
     }
 }
