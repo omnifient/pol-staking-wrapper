@@ -49,8 +49,7 @@ contract Base is Test {
 
         address validatorAddress = _getSigner(signerPubKey);
 
-        vm.prank(0x2f7E0aeCE1df77277504d885246cd98704372758); // at 18762829: 3 MATIC
-        _matic.transfer(validatorAddress, 3 * 10 ** 18);
+        deal(address(_matic), validatorAddress, 3 * 10 ** 18);
 
         assertEq(_matic.balanceOf(validatorAddress), 3 * 10 ** 18);
 
