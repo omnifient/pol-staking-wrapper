@@ -29,6 +29,9 @@ contract Base is Test {
 
     address internal _delegate;
 
+    address internal _governanceAddress =
+        0x6e7a5820baD6cebA8Ef5ea69c0C92EbbDAc9CE48;
+
     function setUp() public virtual {
         address deployer = vm.addr(1);
 
@@ -60,9 +63,8 @@ contract Base is Test {
         assertEq(_matic.balanceOf(validatorAddress), 3 * 10 ** 18);
 
         // prank the stake manager address and increase the validator threshold
-        address governanceAddress = 0x6e7a5820baD6cebA8Ef5ea69c0C92EbbDAc9CE48;
         uint256 currentThreshold = _stakeManager.validatorThreshold();
-        vm.prank(governanceAddress);
+        vm.prank(_governanceAddress);
         _stakeManager.updateValidatorThreshold(currentThreshold + 1);
 
         vm.startPrank(validatorAddress);
@@ -99,5 +101,26 @@ contract Base is Test {
         uint256 precision = 10 ** 29;
         uint256 sharedMinted = (amount * exchangeRate) / precision;
         return sharedMinted;
+    }
+
+    function stakeFrom(address from, uint256 amount) internal {
+        vm.startBroadcast(from);
+        deal(address(_pol), from, amount);
+        _pol.approve(address(_polStakeHelper), amount);
+        _polStakeHelper.stakePOL(amount);
+        vm.stopBroadcast();
+    }
+
+    function randomAmount(uint min, uint max) internal view returns (uint256) {
+        return
+            (uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp,
+                        block.prevrandao,
+                        msg.sender
+                    )
+                )
+            ) % (max - min)) + min;
     }
 }
