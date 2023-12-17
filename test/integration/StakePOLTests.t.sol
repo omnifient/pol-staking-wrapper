@@ -8,7 +8,6 @@ import "./Base.t.sol";
 contract StakePOLTests is Base {
     function setUp() public override {
         super.setUp();
-
         grantOperatorRole(_operator);
     }
 
@@ -157,26 +156,5 @@ contract StakePOLTests is Base {
                 polStakeHelperBalance
             );
         }
-    }
-
-    function stakeFrom(address from, uint256 amount) internal {
-        vm.startBroadcast(from);
-        deal(address(_pol), from, amount);
-        _pol.approve(address(_polStakeHelper), amount);
-        _polStakeHelper.stakePOL(amount);
-        vm.stopBroadcast();
-    }
-
-    function randomAmount(uint min, uint max) internal view returns (uint256) {
-        return
-            (uint256(
-                keccak256(
-                    abi.encodePacked(
-                        block.timestamp,
-                        block.prevrandao,
-                        msg.sender
-                    )
-                )
-            ) % (max - min)) + min;
     }
 }

@@ -32,4 +32,10 @@ abstract contract IStakeManager {
     function updateValidatorThreshold(uint256 validatorId) public virtual;
 
     function token() external view virtual returns (address);
+
+    function epoch() external view virtual returns (uint256);
+
+    function setCurrentEpoch(uint256 _currentEpoch) external virtual;
+
+    function withdrawalDelay() external view virtual returns (uint256);
 }
