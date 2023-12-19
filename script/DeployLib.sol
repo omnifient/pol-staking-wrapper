@@ -23,6 +23,19 @@ library DeployLib {
         // deploy the transparent proxy AND initialize it through the call data
         // NOTE: this implicitly deploys a ProxyAdmin (who is allowed to upgrade)
         console.log("--- deploying and initializing proxy");
+
+        ITransparentUpgradeableProxy(proxy).upgradeToAndCall(
+            address(impl),
+            abi.encodeWithSignature(
+                "initialize(address,address,address,address,address,address)",
+                admin,
+                pol,
+                matic,
+                polygonMigrator,
+                beneficiary,
+                stakeManager
+            )
+        );
         POLStakeHelperProxy proxy = new POLStakeHelperProxy(
             admin,
             address(impl),
