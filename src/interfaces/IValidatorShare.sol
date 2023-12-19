@@ -22,4 +22,10 @@ interface IValidatorShare {
     ) external;
 
     function unstakeClaimTokens_new(uint256 unbondNonce) external;
+
+    function exchangeRate() external view returns (uint256);
+
+    function initalRewardPerShare(
+        address staker
+    ) external view returns (uint256);
 }

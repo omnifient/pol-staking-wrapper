@@ -21,6 +21,17 @@ contract Base is Test {
 
     POLStakeHelper internal _polStakeHelper;
 
+    address internal _operator = vm.addr(1);
+    address internal _randomJoe = vm.addr(2);
+
+    address internal _stakeManagerAddr = vm.envAddress("STAKE_MANAGER");
+    IStakeManager internal _stakeManager = IStakeManager(_stakeManagerAddr);
+
+    address internal _delegate;
+
+    address internal _governanceAddress =
+        0x6e7a5820baD6cebA8Ef5ea69c0C92EbbDAc9CE48;
+
     function setUp() public virtual {
         address deployer = vm.addr(1);
 
@@ -29,11 +40,8 @@ contract Base is Test {
 
         _matic = IERC20(vm.envAddress("TOKEN_MATIC"));
         _pol = IERC20(vm.envAddress("TOKEN_POL"));
-        address stakeManagerAddr = vm.envAddress("STAKE_MANAGER");
-        IStakeManager stakeManager = IStakeManager(stakeManagerAddr);
 
         vm.startPrank(deployer);
-
         // deploy and (partly) initialize the POLStakeHelper
         address polStakeHelperProxyAddr = DeployLib.deploy(
             _admin,
@@ -41,28 +49,94 @@ contract Base is Test {
             address(_matic),
             vm.envAddress("POLYGON_MIGRATOR"),
             _beneficiary,
-            stakeManagerAddr
+            _stakeManagerAddr
         );
         _polStakeHelper = POLStakeHelper(polStakeHelperProxyAddr);
+        vm.stopPrank();
 
-        // -------------
-        bytes memory signerPubKey; // TODO: validator key e.g. vm.envBytes("TEST_SIGNER_PUB_KEY")
-        // pre-requisite: create a validatorshare for our POLStakeHelper
-        // TODO: change some state to be able to call stakeFor
-        stakeManager.stakeFor(
+        bytes memory signerPubKey = vm.envBytes("TEST_SIGNER_PUB_KEY");
+
+        address validatorAddress = _getSigner(signerPubKey);
+
+        deal(address(_matic), validatorAddress, 3 * 10 ** 18);
+
+        assertEq(_matic.balanceOf(validatorAddress), 3 * 10 ** 18);
+
+        // prank the stake manager address and increase the validator threshold
+        uint256 currentThreshold = _stakeManager.validatorThreshold();
+        vm.prank(_governanceAddress);
+        _stakeManager.updateValidatorThreshold(currentThreshold + 1);
+
+        vm.startPrank(validatorAddress);
+        _matic.approve(_stakeManagerAddr, 3 * 10 ** 18);
+        _stakeManager.stakeFor(
             polStakeHelperProxyAddr,
             10 ** 18, // min amount
             10 ** 18, // min fee
             true, // must accept delegation
             signerPubKey // signer pub key for the validator
         );
-        address delegate = stakeManager.getValidatorContract(
-            stakeManager.getValidatorId(polStakeHelperProxyAddr)
+        _delegate = _stakeManager.getValidatorContract(
+            _stakeManager.getValidatorId(polStakeHelperProxyAddr)
         );
-        // -------------
-
-        _polStakeHelper.setDelegate(delegate);
-
         vm.stopPrank();
+
+        vm.prank(_admin);
+        _polStakeHelper.setDelegate(_delegate);
+    }
+
+    function _getSigner(bytes memory pub) private pure returns (address) {
+        require(pub.length == 64, "not pub");
+        return address(uint160(uint256(keccak256(pub))));
+    }
+
+    function grantOperatorRole(address to) internal {
+        bytes32 role = _polStakeHelper.ROLE_OPERATOR();
+        vm.broadcast(_admin);
+        _polStakeHelper.grantRole(role, to);
+    }
+
+    function getDelegateShares(uint256 amount) internal view returns (uint256) {
+        uint256 exchangeRate = IValidatorShare(_delegate).exchangeRate();
+        uint256 precision = 10 ** 29;
+        uint256 sharedMinted = (amount * exchangeRate) / precision;
+        return sharedMinted;
+    }
+
+    function stakeFrom(address from, uint256 amount) internal {
+        vm.startBroadcast(from);
+        deal(address(_pol), from, amount);
+        _pol.approve(address(_polStakeHelper), amount);
+        _polStakeHelper.stakePOL(amount);
+        vm.stopBroadcast();
+    }
+
+    function randomAmount(uint min, uint max) internal view returns (uint256) {
+        return
+            (uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp,
+                        block.prevrandao,
+                        msg.sender
+                    )
+                )
+            ) % (max - min)) + min;
+    }
+
+    function _increaseRewardPerStake(
+        uint256 _value
+    ) internal returns (uint256) {
+        bytes32 slot = bytes32(uint256(36));
+        bytes32 load = vm.load(address(_stakeManager), slot);
+        emit log_bytes32(load);
+
+        // convert bytes32 to uint256
+        uint256 currentRewardPerStake = uint256(load);
+
+        bytes32 value = bytes32(uint256(currentRewardPerStake + _value));
+        vm.store(address(_stakeManager), slot, value);
+
+        return currentRewardPerStake + _value;
     }
 }
