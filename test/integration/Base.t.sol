@@ -123,4 +123,20 @@ contract Base is Test {
                 )
             ) % (max - min)) + min;
     }
+
+    function _increaseRewardPerStake(
+        uint256 _value
+    ) internal returns (uint256) {
+        bytes32 slot = bytes32(uint256(36));
+        bytes32 load = vm.load(address(_stakeManager), slot);
+        emit log_bytes32(load);
+
+        // convert bytes32 to uint256
+        uint256 currentRewardPerStake = uint256(load);
+
+        bytes32 value = bytes32(uint256(currentRewardPerStake + _value));
+        vm.store(address(_stakeManager), slot, value);
+
+        return currentRewardPerStake + _value;
+    }
 }

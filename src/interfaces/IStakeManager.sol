@@ -38,4 +38,8 @@ abstract contract IStakeManager {
     function setCurrentEpoch(uint256 _currentEpoch) external virtual;
 
     function withdrawalDelay() external view virtual returns (uint256);
+
+    function delegatorsReward(
+        uint256 validatorId
+    ) external view virtual returns (uint256);
 }
