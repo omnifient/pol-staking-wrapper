@@ -62,7 +62,6 @@ contract AccessControlTests is Base {
     }
 
     function testOperatorCanSetDelegate() public {
-        grantOperatorRole(_operator);
         vm.startPrank(_operator);
         address newDelegate = address(3);
         _polStakeHelper.setDelegate(newDelegate);
@@ -85,7 +84,7 @@ contract AccessControlTests is Base {
     }
 
     function testNonAdminCannotSetDelegate() public {
-        vm.startPrank(_operator);
+        vm.startPrank(_randomJoe);
         vm.expectRevert("NOT_ALLOWED");
         _polStakeHelper.setDelegate(address(3));
         vm.stopPrank();

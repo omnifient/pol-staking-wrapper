@@ -6,17 +6,12 @@ import "lib/forge-std/src/Test.sol";
 import "./Base.t.sol";
 
 contract StakePOLTests is Base {
-    function setUp() public override {
-        super.setUp();
-        grantOperatorRole(_operator);
-    }
-
     function testAdminCanStake() public {
         uint256 polAmount = 10 * 10 ** 18;
         uint256 stakeMngrBalanceBefore = _matic.balanceOf(
             address(_stakeManager)
         );
-        uint256 expectedSharesMinted = getDelegateShares(polAmount);
+        uint256 expectedSharesMinted = _getDelegateShares(polAmount);
 
         vm.expectCall(
             vm.envAddress("POLYGON_MIGRATOR"),
@@ -26,7 +21,7 @@ contract StakePOLTests is Base {
             )
         );
 
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         uint256 stakeMngrBalanceAfter = _matic.balanceOf(
             address(_stakeManager)
@@ -44,9 +39,9 @@ contract StakePOLTests is Base {
         uint256 stakeMngrBalanceBefore = _matic.balanceOf(
             address(_stakeManager)
         );
-        uint256 expectedSharesMinted = getDelegateShares(polAmount);
+        uint256 expectedSharesMinted = _getDelegateShares(polAmount);
 
-        stakeFrom(_operator, polAmount);
+        _stakePOL(_operator, polAmount);
 
         uint256 stakeMngrBalanceAfter = _matic.balanceOf(
             address(_stakeManager)
@@ -68,8 +63,8 @@ contract StakePOLTests is Base {
         uint256 adminStakeMngrBalanceBefore = _matic.balanceOf(
             address(_stakeManager)
         );
-        uint256 adminExpectedSharesMinted = getDelegateShares(adminPolAmount);
-        stakeFrom(_admin, adminPolAmount);
+        uint256 adminExpectedSharesMinted = _getDelegateShares(adminPolAmount);
+        _stakePOL(_admin, adminPolAmount);
         uint256 adminStakeMngrBalanceAfter = _matic.balanceOf(
             address(_stakeManager)
         );
@@ -88,10 +83,10 @@ contract StakePOLTests is Base {
         uint256 operatorStakeMngrBalanceBefore = _matic.balanceOf(
             address(_stakeManager)
         );
-        uint256 operatorExpectedSharesMinted = getDelegateShares(
+        uint256 operatorExpectedSharesMinted = _getDelegateShares(
             operatorPolAmount
         );
-        stakeFrom(_operator, operatorPolAmount);
+        _stakePOL(_operator, operatorPolAmount);
         uint256 operatorStakeMngrBalanceAfter = _matic.balanceOf(
             address(_stakeManager)
         );
@@ -134,15 +129,15 @@ contract StakePOLTests is Base {
 
         for (uint i = 0; i < numTests; i++) {
             // Generate a random amount to stake
-            uint256 polAmount = randomAmount(minStake, maxStake);
+            uint256 polAmount = _randomAmount(minStake, maxStake);
 
             // Record the balances before staking
             uint256 stakeMngrBalanceBefore = _matic.balanceOf(
                 address(_stakeManager)
             );
-            polStakeHelperBalance += getDelegateShares(polAmount);
+            polStakeHelperBalance += _getDelegateShares(polAmount);
             // Perform the staking
-            stakeFrom(_admin, polAmount);
+            _stakePOL(_admin, polAmount);
 
             // Record the balances after staking
             uint256 stakeMngrBalanceAfter = _matic.balanceOf(

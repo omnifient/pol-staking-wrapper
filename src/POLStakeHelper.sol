@@ -77,6 +77,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
     }
 
+    // TODO: onlyOnce?
     function setDelegate(address delegate_) external onlyAdminOrOperator {
         delegate = IValidatorShare(delegate_);
     }

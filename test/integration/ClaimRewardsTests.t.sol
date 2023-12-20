@@ -5,16 +5,10 @@ import "lib/forge-std/src/Test.sol";
 import "./Base.t.sol";
 
 contract ClaimRewardsTests is Base {
-    function setUp() public override {
-        super.setUp();
-
-        grantOperatorRole(_operator);
-    }
-
     function testAdminCanClaimRewards() public {
         // stake some POL
         uint256 polAmount = 10 * 10 ** 18;
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         uint256 polBalanceBefore = _pol.balanceOf(_beneficiary);
 
@@ -42,7 +36,7 @@ contract ClaimRewardsTests is Base {
     function testOperatorCanClaimRewards() public {
         // stake some POL
         uint256 polAmount = 10 * 10 ** 18;
-        stakeFrom(_operator, polAmount);
+        _stakePOL(_operator, polAmount);
 
         uint256 polBalanceBefore = _pol.balanceOf(_beneficiary);
 
@@ -70,7 +64,7 @@ contract ClaimRewardsTests is Base {
     function testRandomJoeCannotClaimRewards() public {
         // stake some POL
         uint256 polAmount = 10 * 10 ** 18;
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         // increase rewards - min threshold per validator (10**18)
         _increaseRewardPerStake(10000000 * 10 ** 18);
@@ -84,7 +78,7 @@ contract ClaimRewardsTests is Base {
     function testClaimRewardsWithNoAvailableRewards() public {
         // stake some POL
         uint256 polAmount = 10 * 10 ** 18;
-        stakeFrom(_operator, polAmount);
+        _stakePOL(_operator, polAmount);
 
         // claim rewards
         vm.broadcast(_operator);
@@ -95,7 +89,7 @@ contract ClaimRewardsTests is Base {
     function testClaimRewardsWithNewBeneficiary() public {
         // stake some POL
         uint256 polAmount = 10 * 10 ** 18;
-        stakeFrom(_operator, polAmount);
+        _stakePOL(_operator, polAmount);
 
         // increase rewards - min threshold per validator (10**18)
         _increaseRewardPerStake(10000000 * 10 ** 18);

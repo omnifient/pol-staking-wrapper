@@ -10,7 +10,6 @@ contract UnstakeTests is Base {
 
     function setUp() public override {
         super.setUp();
-        grantOperatorRole(_operator);
         epoch = _stakeManager.epoch();
         withdrawalDelay = _stakeManager.withdrawalDelay();
     }
@@ -19,7 +18,7 @@ contract UnstakeTests is Base {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         uint256 stakerBalanceBefore = _pol.balanceOf(_beneficiary);
 
@@ -40,12 +39,12 @@ contract UnstakeTests is Base {
         assertEq(stakerBalanceAfter - stakerBalanceBefore, polAmount);
     }
 
-    // not wait withdrawal delay
+    // no wait withdrawal delay
     function testAdminCantUnstakeWhenWithdrawalDelayNotElapsed() public {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         // unstake part 1
         vm.broadcast(_admin);
@@ -66,7 +65,7 @@ contract UnstakeTests is Base {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_operator, polAmount);
+        _stakePOL(_operator, polAmount);
 
         uint256 stakerBalanceBefore = _pol.balanceOf(_beneficiary);
 
@@ -101,7 +100,7 @@ contract UnstakeTests is Base {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         // unstake part 1
         vm.startBroadcast(_admin);
@@ -123,7 +122,7 @@ contract UnstakeTests is Base {
         _polStakeHelper.transferUnstakedPOL();
 
         // staking when the unbonds share are transferred passes
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
     }
 
     function testPartiallyUnstake() public {
@@ -135,19 +134,19 @@ contract UnstakeTests is Base {
 
         for (uint i = 0; i < numTests; i++) {
             // Generate a random amount to stake
-            uint256 polAmount = randomAmount(minStake, maxStake);
+            uint256 polAmount = _randomAmount(minStake, maxStake);
 
             // Record the balances before staking
             totalPolStaked += polAmount;
             // Perform the staking
-            stakeFrom(_admin, polAmount);
+            _stakePOL(_admin, polAmount);
         }
 
         uint256 stakerBalanceBefore = _pol.balanceOf(_beneficiary);
 
         uint256 polToUnstake = totalPolStaked / 2;
 
-        uint256 expectedRemainingShares = getDelegateShares(polToUnstake);
+        uint256 expectedRemainingShares = _getDelegateShares(polToUnstake);
 
         // unstake part 1
         vm.broadcast(_admin);
@@ -177,7 +176,7 @@ contract UnstakeTests is Base {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         vm.broadcast(_admin);
         vm.expectRevert("Incomplete withdrawal period");
@@ -188,7 +187,7 @@ contract UnstakeTests is Base {
         uint256 polAmount = 10 * 10 ** 18;
 
         // stake
-        stakeFrom(_admin, polAmount);
+        _stakePOL(_admin, polAmount);
 
         // unstake more than staked
         vm.broadcast(_admin);
