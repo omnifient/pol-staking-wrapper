@@ -57,7 +57,7 @@ contract POLStakeHelper is AccessControlUpgradeable {
         address beneficiary_,
         address stakeManager_
     ) external initializer {
-        // TODO: add access control to initialization function
+        // initialize is "atomically" called through the proxy's _data arg, which prevents being front-ran
 
         __AccessControl_init(); // does nothing, but keeping it here as best practice
 
@@ -77,7 +77,6 @@ contract POLStakeHelper is AccessControlUpgradeable {
         _grantRole(ROLE_ADMIN, admin); // grant ROLE_ADMIN to `admin`
     }
 
-    // TODO: onlyOnce?
     function setDelegate(address delegate_) external onlyAdminOrOperator {
         delegate = IValidatorShare(delegate_);
     }
@@ -107,7 +106,6 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// will transfer the unstaked tokens to the beneficiary.
     function unstakePOL(uint256 amount) external onlyAdminOrOperator {
         require(amount > 0, "INVALID_AMT");
-        // TODO: require(amount <= delegate.balanceOf(address(this)) * delegate.exchangeRate(), "INSUFFICIENT_BAL");
 
         // initiate the unstaking of MATIC
         delegate.sellVoucher(amount, amount);
@@ -133,8 +131,6 @@ contract POLStakeHelper is AccessControlUpgradeable {
     /// @notice This function calls withdrawRewards on the staking contract,
     /// converting the MATIC rewards into POL, sending it to the `beneficiary`.
     function claimRewards() external onlyAdminOrOperator {
-        // TODO: require(validatorId != 0, "NO_STAKE_YET");
-
         // withdraw the rewards from staking
         delegate.withdrawRewards();
 
