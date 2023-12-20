@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 import "lib/forge-std/src/console.sol";
 
-import "../src/POLStakeHelper.sol";
-import "../src/POLStakeHelperProxy.sol";
+import "../../src/POLStakeHelper.sol";
+import "../../src/POLStakeHelperProxy.sol";
 
 library DeployLib {
     function deploy(

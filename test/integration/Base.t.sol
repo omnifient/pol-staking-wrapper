@@ -5,7 +5,7 @@ import "lib/forge-std/src/Test.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../../script/DeployLib.sol";
+import "../../script/helpers/DeployLib.sol";
 
 import "../../src/POLStakeHelperProxy.sol";
 import "../../src/POLStakeHelper.sol";
@@ -29,8 +29,8 @@ contract Base is Test {
 
     function setUp() public virtual {
         address deployer = vm.addr(1);
-        _admin = vm.envAddress("ADDRESS_ADMIN"); // TODO: use vm.addr(2)?
-        _beneficiary = vm.envAddress("BENEFICIARY"); // TODO: use vm.addr(3)?
+        _admin = vm.envAddress("ADMIN");
+        _beneficiary = vm.envAddress("BENEFICIARY");
         _operator = vm.addr(4);
         _randomJoe = vm.addr(5);
 
@@ -55,14 +55,14 @@ contract Base is Test {
 
         // 2. configure the validator to create a validator share
         // 2.1 get the validator's address
-        bytes memory signerPubKey = vm.envBytes("TEST_SIGNER_PUB_KEY");
+        bytes memory signerPubKey = vm.envBytes("SIGNER_PUB_KEY");
         address validatorAddress = _getSigner(signerPubKey);
 
         // 2.2 fund the validator
         deal(address(_matic), validatorAddress, 3 * 10 ** 18);
         assertEq(_matic.balanceOf(validatorAddress), 3 * 10 ** 18);
 
-        // 2.3 prank the stake manager address and increase the validator threshold
+        // 2.3 prank the governance so that we can increase the validator threshold in the stake manager
         uint256 currentThreshold = _stakeManager.validatorThreshold();
         vm.prank(_governanceAddress);
         _stakeManager.updateValidatorThreshold(currentThreshold + 1);

@@ -70,7 +70,7 @@ contract AccessControlTests is Base {
         assertEq(address(_polStakeHelper.delegate()), newDelegate);
     }
 
-    function testNonAdminOrOperatorCannotChangeBeneficiary() public {
+    function testNonAdminOrOperatorCannotSetBeneficiary() public {
         vm.startPrank(_randomJoe);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -83,7 +83,7 @@ contract AccessControlTests is Base {
         vm.stopPrank();
     }
 
-    function testNonAdminCannotSetDelegate() public {
+    function testNonAdminOrOperatorCannotSetDelegate() public {
         vm.startPrank(_randomJoe);
         vm.expectRevert("NOT_ALLOWED");
         _polStakeHelper.setDelegate(address(3));
